@@ -83,7 +83,7 @@ jobs:
 
           for remote in "${!urls[@]}"; do
             #git_subtree "pull" "${prefixes[$remote]}" "$remote" "${urls[$remote]}"
-            git subtree pull --prefix "${prefixes[$remote]}" --squash -m"[skip ci]" "${urls[$remote]}" master
+            git subtree pull --prefix "${prefixes[$remote]}" -m"[skip ci]" "${urls[$remote]}" master
           done
 
           git push
