@@ -1687,3 +1687,4 @@ void CModGridCtrlEx::SetResizeRowsOnPaste(bool bValue)
 	m_bResizeRowsOnPaste = bValue;
 }
 // Tue, Oct 26, 2021 12:32:35 PM
+// Tue, Oct 26, 2021 12:33:49 PM
