@@ -87,6 +87,14 @@ jobs:
           done
 
           git push
+
+          for remote in "${!urls[@]}"; do
+            #git_subtree "push" "${prefixes[$remote]}" "$remote" "${urls[$remote]}"
+            git subtree push --prefix "${prefixes[$remote]}" --squash "$remote" "${urls[$remote]}" master
+          done
+
+          git push
+
 # Tue, Oct 26, 2021 12:27:21 PM
 # Tue, Oct 26, 2021 12:28:02 PM
 # Tue, Oct 26, 2021 12:28:36 PM
