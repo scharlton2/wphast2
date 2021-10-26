@@ -90,7 +90,7 @@ jobs:
 
           for remote in "${!urls[@]}"; do
             #git_subtree "push" "${prefixes[$remote]}" "$remote" "${urls[$remote]}"
-            git subtree push --prefix "${prefixes[$remote]}" "$remote" "${urls[$remote]}" master
+            git subtree push --prefix "${prefixes[$remote]}" "${urls[$remote]}" master
           done
 
           git push
