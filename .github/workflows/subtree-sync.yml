@@ -1,0 +1,89 @@
+name: subtree-sync
+
+on:
+  push:
+    branches: [ master ]
+
+# Note: github differs from gitlab in that github doesn't allow sub-groups
+# therefore gitlab has additional
+#   gitlab url = git@${CI_SERVER_HOST}:${GROUP}/subtrees/phreeqc3-database.git
+#   github url = git@${CI_SERVER_HOST}:${GROUP}/phreeqc3-database.git
+env:
+  CI_SERVER_HOST: github.com
+  GROUP: ${{ github.repository_owner }}
+  SUBGROUP: ${{ github.repository_owner }}-subtrees
+
+jobs:
+
+  init:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: setup user
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      # - name: clone
+      #   shell: /usr/bin/bash -ex {0}
+      #   run: |
+      #     git clone ${{ github.event.repository.git_url }}
+
+      - name: prototype
+        shell: /usr/bin/bash -ex {0}
+        run: |
+          # WPhast\                    git@${CI_SERVER_HOST}:${GROUP}/wphast.git
+          # ├─msi\                     ├─msi
+          # │ └─phast                  │ └─phast
+          # │   ├─database             │   ├─git@${CI_SERVER_HOST}:${SUBGROUP}/phreeqc3-database.git               msi/phast/database
+          # │   ├─doc\                 │   ├─git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-doc.git                      msi/phast/doc
+          # │   │ └─phreeqc3-doc\      │   │ └─git@${CI_SERVER_HOST}:${SUBGROUP}/phreeqc3-doc.git                  msi/phast/doc/phreeqc3-doc
+          # │   └─examples             │   └─git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-examples.git                 msi/phast/examples
+          # └─src\                     └─src
+          #   ├─gridctrl\                ├─git@${CI_SERVER_HOST}:${SUBGROUP}/wphast-src-gridctrl.git               src/gridctrl
+          #   ├─phast                    ├─phast
+          #   │ └─PhreeqcRM              │ └─PhreeqcRM
+          #   │   └─src                  │   └─src
+          #   │     └─IPhreeqcPhast      │     └─IPhreeqcPhast
+          #   │       └─IPhreeqc         │       └─IPhreeqc
+          #   │         └─phreeqcpp      │         └─phreeqcpp
+          #   │           └─common       │           └─git@${CI_SERVER_HOST}:${SUBGROUP}/phreeqc3-src-common.git   src/phast/PhreeqcRM/src/IPhreeqcPhast/IPhreeqc/phreeqcpp/common
+          #   └─srcinput\                └─git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-src-phastinput.git             src/srcinput
+          #     └─common<SYMLINKD>         └─common<SYMLINKD>\                                                     [..\phast\PhreeqcRM\src\IPhreeqcPhast\IPhreeqc\phreeqcpp\common]
+
+          git_subtree() {
+            git subtree "${1}" --prefix="${2}" "${4}" master
+          }
+
+          declare -A urls=( \
+            ["phreeqc3-database"]="git@${CI_SERVER_HOST}:${SUBGROUP}/phreeqc3-database.git" \
+            ["phast3-doc"]="git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-doc.git" \
+            ["phast3-examples"]="git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-examples.git" \
+            ["phast3-examples"]="git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-examples" \
+            ["wphast-src-gridctrl"]="git@${CI_SERVER_HOST}:${SUBGROUP}/wphast-src-gridctrl.git" \
+            ["phreeqc3-src-common"]="git@${CI_SERVER_HOST}:${SUBGROUP}/phreeqc3-src-common.git" \
+            ["phast3-src-phastinput"]="git@${CI_SERVER_HOST}:${SUBGROUP}/phast3-src-phastinput.git" \
+          )
+
+          declare -A prefixes=( \
+            ["phreeqc3-database"]="msi/phast/database" \
+            ["phast3-doc"]="msi/phast/doc" \
+            ["phast3-examples"]="msi/phast/examples" \
+            ["wphast-src-gridctrl"]="src/gridctrl" \
+            ["phreeqc3-src-common"]="src/phast/PhreeqcRM/src/IPhreeqcPhast/IPhreeqc/phreeqcpp/common" \
+            ["phast3-src-phastinput"]="src/srcinput" \
+          )
+
+          export GIT_EDITOR=true
+
+          for remote in "${!urls[@]}"; do
+            #git_subtree "pull" "${prefixes[$remote]}" "$remote" "${urls[$remote]}"
+            git subtree pull --prefix "${prefixes[$remote]}" --squash -m"[skip ci]" "${urls[$remote]}" master
+          done
+
+          git push
